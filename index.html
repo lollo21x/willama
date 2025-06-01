@@ -341,11 +341,6 @@
             </div>
             
             <div class="form-group">
-                <label class="form-label">API Key OpenRouter</label>
-                <input type="password" class="form-input" id="apiKeyInput" placeholder="Inserisci la tua API key">
-            </div>
-            
-            <div class="form-group">
                 <label class="form-label">Istruzioni Personali per l'AI</label>
                 <textarea class="form-input" id="systemPromptInput" placeholder="Inserisci le istruzioni personalizzate per il chatbot..."></textarea>
             </div>
@@ -357,21 +352,15 @@
     <script>
         // Configurazione
         const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-        const MODEL = 'meta-llama/llama-3.2-1b-instruct:free';
+        const MODEL = 'meta-llama/llama-4-scout:free';
+        const API_KEY = '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';
         
         // Variabili globali
-        let apiKey = '';
         let systemPrompt = 'Sei un assistente AI utile e amichevole. Rispondi sempre in italiano in modo chiaro e conciso.';
         
         // Carica impostazioni salvate
         function loadSettings() {
-            const savedApiKey = localStorage.getItem('openrouter_api_key');
             const savedSystemPrompt = localStorage.getItem('system_prompt');
-            
-            if (savedApiKey) {
-                apiKey = savedApiKey;
-                document.getElementById('apiKeyInput').value = savedApiKey;
-            }
             
             if (savedSystemPrompt) {
                 systemPrompt = savedSystemPrompt;
@@ -381,18 +370,10 @@
         
         // Salva impostazioni
         function saveSettings() {
-            const newApiKey = document.getElementById('apiKeyInput').value.trim();
             const newSystemPrompt = document.getElementById('systemPromptInput').value.trim();
             
-            if (!newApiKey) {
-                alert('Per favore inserisci una API key valida');
-                return;
-            }
-            
-            apiKey = newApiKey;
             systemPrompt = newSystemPrompt || 'Sei un assistente AI utile e amichevole. Rispondi sempre in italiano in modo chiaro e conciso.';
             
-            localStorage.setItem('openrouter_api_key', apiKey);
             localStorage.setItem('system_prompt', systemPrompt);
             
             closeSettings();
@@ -438,11 +419,6 @@
             
             if (!message) return;
             
-            if (!apiKey) {
-                alert('Per favore configura la tua API key nelle impostazioni');
-                openSettings();
-                return;
-            }
             
             // Disabilita input
             input.disabled = true;
@@ -458,7 +434,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
+                        'Authorization': `Bearer ${API_KEY}`,
                         'HTTP-Referer': window.location.origin,
                         'X-Title': 'Chat AI'
                     },
@@ -495,7 +471,7 @@
                 
             } catch (error) {
                 console.error('Errore:', error);
-                addMessage(`Errore: ${error.message}. Verifica la tua API key nelle impostazioni.`);
+                addMessage(`Errore nella comunicazione con l'API: ${error.message}`);
             } finally {
                 // Riabilita input
                 input.disabled = false;
