@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .settings-btn {
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .settings-btn:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 15px 20px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-input:focus {
+            border-color: rgba(52, 152, 219, 0.8);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .send-btn {
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-size: 16px;
+            min-width: 80px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            color: white;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-input:focus {
+            border-color: rgba(52, 152, 219, 0.8);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .save-btn {
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .save-btn:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .chat-input-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .send-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1 class="chat-title">Chat AI</h1>
+            <button class="settings-btn" onclick="openSettings()">⚙️ Impostazioni</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+                <p>Ciao! Sono il tuo assistente AI. Come posso aiutarti oggi?</p>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Scrivi il tuo messaggio..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Invia</button>
+        </div>
+    </div>
+
+    <!-- Modal Impostazioni -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Impostazioni</h2>
+                <button class="close-btn" onclick="closeSettings()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">API Key OpenRouter</label>
+                <input type="password" class="form-input" id="apiKeyInput" placeholder="Inserisci la tua API key">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Istruzioni Personali per l'AI</label>
+                <textarea class="form-input" id="systemPromptInput" placeholder="Inserisci le istruzioni personalizzate per il chatbot..."></textarea>
+            </div>
+            
+            <button class="save-btn" onclick="saveSettings()">Salva Impostazioni</button>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione
+        const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        const MODEL = 'meta-llama/llama-3.2-1b-instruct:free';
+        
+        // Variabili globali
+        let apiKey = '';
+        let systemPrompt = 'Sei un assistente AI utile e amichevole. Rispondi sempre in italiano in modo chiaro e conciso.';
+        
+        // Carica impostazioni salvate
+        function loadSettings() {
+            const savedApiKey = localStorage.getItem('openrouter_api_key');
+            const savedSystemPrompt = localStorage.getItem('system_prompt');
+            
+            if (savedApiKey) {
+                apiKey = savedApiKey;
+                document.getElementById('apiKeyInput').value = savedApiKey;
+            }
+            
+            if (savedSystemPrompt) {
+                systemPrompt = savedSystemPrompt;
+                document.getElementById('systemPromptInput').value = savedSystemPrompt;
+            }
+        }
+        
+        // Salva impostazioni
+        function saveSettings() {
+            const newApiKey = document.getElementById('apiKeyInput').value.trim();
+            const newSystemPrompt = document.getElementById('systemPromptInput').value.trim();
+            
+            if (!newApiKey) {
+                alert('Per favore inserisci una API key valida');
+                return;
+            }
+            
+            apiKey = newApiKey;
+            systemPrompt = newSystemPrompt || 'Sei un assistente AI utile e amichevole. Rispondi sempre in italiano in modo chiaro e conciso.';
+            
+            localStorage.setItem('openrouter_api_key', apiKey);
+            localStorage.setItem('system_prompt', systemPrompt);
+            
+            closeSettings();
+            alert('Impostazioni salvate con successo!');
+        }
+        
+        // Gestione modal
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+        
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+        
+        // Gestione input
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        // Aggiungi messaggio alla chat
+        function addMessage(content, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            const messageP = document.createElement('p');
+            messageP.textContent = content;
+            messageDiv.appendChild(messageP);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Invia messaggio
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!apiKey) {
+                alert('Per favore configura la tua API key nelle impostazioni');
+                openSettings();
+                return;
+            }
+            
+            // Disabilita input
+            input.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<div class="loading"></div>';
+            
+            // Aggiungi messaggio utente
+            addMessage(message, true);
+            input.value = '';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'HTTP-Referer': window.location.origin,
+                        'X-Title': 'Chat AI'
+                    },
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: systemPrompt
+                            },
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        max_tokens: 1000,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const assistantMessage = data.choices[0]?.message?.content;
+                
+                if (assistantMessage) {
+                    addMessage(assistantMessage);
+                } else {
+                    throw new Error('Risposta non valida dal server');
+                }
+                
+            } catch (error) {
+                console.error('Errore:', error);
+                addMessage(`Errore: ${error.message}. Verifica la tua API key nelle impostazioni.`);
+            } finally {
+                // Riabilita input
+                input.disabled = false;
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Invia';
+                input.focus();
+            }
+        }
+        
+        // Chiudi modal cliccando fuori
+        window.onclick = function(event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target === modal) {
+                closeSettings();
+            }
+        }
+        
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            document.getElementById('chatInput').focus();
+        });
+    </script>
+</body>
+</html>
